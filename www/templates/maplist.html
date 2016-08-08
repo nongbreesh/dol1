@@ -1,8 +1,12 @@
 <ion-view view-title="ชั้นข้อมูลแผนที่">
   <ion-content>
+    <button class="button  button-light" style="width: 100%;"  ng-click="selectlayer('')" >
+      ล้างข้อมูล
+    </button>
     <div class="list">
 
-      <a class="item item-thumbnail-left" href="#app/layer/{{value.title}}" ng-repeat="value in layerlist">
+      <!--<a class="item item-thumbnail-left" href="#app/layer/{{value.title}}" ng-repeat="value in layerlist">-->
+      <a class="item item-thumbnail-left" href=""  ng-click="selectlayer(value.title)" ng-repeat="value in layerlist"   >
         <img src="{{value.thumbnail_url}}">
         <h2>{{value.title}}</h2>
         <p>{{value.abstract}}</p>

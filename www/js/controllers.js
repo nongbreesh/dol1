@@ -28,6 +28,10 @@ angular.module('starter.controllers', [])
     $scope.login = function () {
       $scope.modal.show();
     };
+    $scope.activelayer = "ไม่มี";
+    $scope.$on('layerchanged', function (event, args) {
+      $scope.activelayer = args.title;
+    });
 
     // Perform the login action when the user submits the login form
     $scope.doLogin = function () {
@@ -54,31 +58,93 @@ angular.module('starter.controllers', [])
 
   .controller('MapCtrl', function ($scope, $stateParams, LocationsService, $cordovaGeolocation, $ionicLoading, $ionicModal, $timeout, Loading, ApiService) {
 
-    $scope.map = {
-      defaults: {
-        tileLayer: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
-        maxZoom: 18,
-        zoomControlPosition: 'bottomleft'
-      },
-      markers: {},
-      events: {
-        map: {
-          enable: ['context'],
-          logic: 'emit'
+
+    $scope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState, fromParams) {
+
+
+      $scope.map = {
+        eeuu: {
+          lat: 39,
+          lng: -100,
+          zoom: 4
+        },
+        layers: {
+          baselayers: {
+            xyz: {
+              name: 'OpenStreetMap (XYZ)',
+              url: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+              type: 'xyz'
+            }
+          },
+          overlays: {}
+        },
+        defaults: {
+          tileLayer: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
+          maxZoom: 18,
+          zoomControlPosition: 'bottomleft'
+        },
+        markers: {},
+        events: {
+          map: {
+            enable: ['context'],
+            logic: 'emit'
+          }
+        }
+      };
+      $scope.map.center = {};
+
+      console.log($scope.map);
+
+      if (toState.name == "app.map") {
+        if ($scope.activelayer == "ไม่มี") {
+
+        }
+        else {
+
+
+          //var url = "http://localhost:8080/geoserver/dol/wms?"
+          //url += "&REQUEST=GetMap"; //WMS operation
+          //url += "&SERVICE=WMS";    //WMS service
+          //url += "&VERSION=1.1.0";  //WMS version
+          //url += "&LAYERS=" + $scope.activelayer; //WMS layers
+          //url += "&FORMAT=image/png"; //WMS format
+          //url += "&BGCOLOR=0xFFFFFF";
+          //url += "&TRANSPARENT=TRUE";
+          //url += "&SRS=EPSG:4326";     //set WGS84
+          //url += "&BBOX=" + "-180.0,-89.99892578125,180.0,83.1161132812501";      // set bounding box
+          ////url += "&BBOX=" + bbox;      // set bounding box
+          //url += "&WIDTH=256";         //tile size in google
+          //url += "&HEIGHT=256";
+          //
+          //console.log(url);
+
+          $scope.map.layers.overlays.wms = {
+            name: $scope.activelayer,
+            type: 'wms',
+            visible: true,
+            url: 'http://localhost/geoserver/dol/wms',
+            layerParams: {
+              layers: $scope.activelayer,
+              format: 'image/png',
+              transparent: true
+            }
+          };
+
+
         }
       }
-    };
-    $scope.map.center = {};
+
+    }),
 
 
-    locate();
+      //locate();
 
     /**
      * Center map on user's current position
      */
-    $scope.locate = function () {
-      locate();
-    };
+      $scope.locate = function () {
+        locate();
+      };
 
 
     function locate() {
@@ -170,20 +236,41 @@ angular.module('starter.controllers', [])
       }, 1000);
     };
   })
-  .controller('MaplistCtrl', function ($scope, $stateParams, ApiService) {
+  .controller('MaplistCtrl', function ($scope, $stateParams, ApiService, $rootScope, $ionicHistory, $http) {
 
-    $scope.layerlist = [
-      {
-        title: "prof_est_04",
-        thumbnail_url: "http://demo.geonode.org/uploaded/thumbs/layer-0908d150-50b7-11e6-9a24-0e23392a5c01-thumb.png",
-        abstract: "No abstract provided"
-      },
-      {
-        title: "mv_substation",
-        thumbnail_url: "http://demo.geonode.org/uploaded/thumbs/layer-7b146844-5027-11e6-a524-0e23392a5c01-thumb.png",
-        abstract: "No abstract provided"
+    $scope.selectlayer = function (title) {
+      if (title == "") {
+        title = "ไม่มี";
       }
-    ];
+      $ionicHistory.goBack()
+      $rootScope.$broadcast('layerchanged', {title: title});
+    };
+
+    var layerUrl = "http://localhost/api/layers/";
+    $http({
+      method: 'jsonp',
+      url: layerUrl,
+      params: {
+        format: 'jsonp',
+        callback: 'JSON_CALLBACK'
+      }
+    }).then(function (response) {
+      console.log(response);
+      $scope.layerlist = response.data.objects;
+    });
+
+    //$scope.layerlist = [
+    //  {
+    //    title: "prof_est_04",
+    //    thumbnail_url: "http://demo.geonode.org/uploaded/thumbs/layer-0908d150-50b7-11e6-9a24-0e23392a5c01-thumb.png",
+    //    abstract: "No abstract provided"
+    //  },
+    //  {
+    //    title: "mv_substation",
+    //    thumbnail_url: "http://demo.geonode.org/uploaded/thumbs/layer-7b146844-5027-11e6-a524-0e23392a5c01-thumb.png",
+    //    abstract: "No abstract provided"
+    //  }
+    //];
 
 
   })

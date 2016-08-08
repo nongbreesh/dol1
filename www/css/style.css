@@ -79,3 +79,8 @@
   border: 0px;
   color:#fff;
 }
+.active-layer {
+  padding: 5px;
+  background: #000;
+  color: #fff;
+}
