@@ -60,7 +60,7 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', '
         }
       })
       .state('app.mapdetail', {
-        url: '/map/:id',
+        url: '/map/:provid/:amphurid/:parcelno',
         views: {
           'menuContent': {
             templateUrl: 'templates/mapdetail.html',

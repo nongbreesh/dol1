@@ -11,7 +11,7 @@ angular.module('starter.controllers', [])
 
     // Form data for the login modal
     $scope.loginData = {};
-
+    $scope.landinfo = null;
     // Create the login modal that we will use later
     $ionicModal.fromTemplateUrl('templates/login.html', {
       scope: $scope
@@ -60,8 +60,6 @@ angular.module('starter.controllers', [])
 
 
     $scope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState, fromParams) {
-
-
       $scope.map = {
         eeuu: {
           lat: 39,
@@ -74,6 +72,21 @@ angular.module('starter.controllers', [])
               name: 'OpenStreetMap (XYZ)',
               url: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
               type: 'xyz'
+            },
+            googleTerrain: {
+              name: 'Google Terrain',
+              layerType: 'TERRAIN',
+              type: 'google'
+            },
+            googleHybrid: {
+              name: 'Google Hybrid',
+              layerType: 'HYBRID',
+              type: 'google'
+            },
+            googleRoadmap: {
+              name: 'Google Streets',
+              layerType: 'ROADMAP',
+              type: 'google'
             }
           },
           overlays: {}
@@ -96,27 +109,13 @@ angular.module('starter.controllers', [])
       console.log($scope.map);
 
       if (toState.name == "app.map") {
+
+        activeland();
         if ($scope.activelayer == "ไม่มี") {
 
         }
         else {
 
-
-          //var url = "http://localhost:8080/geoserver/dol/wms?"
-          //url += "&REQUEST=GetMap"; //WMS operation
-          //url += "&SERVICE=WMS";    //WMS service
-          //url += "&VERSION=1.1.0";  //WMS version
-          //url += "&LAYERS=" + $scope.activelayer; //WMS layers
-          //url += "&FORMAT=image/png"; //WMS format
-          //url += "&BGCOLOR=0xFFFFFF";
-          //url += "&TRANSPARENT=TRUE";
-          //url += "&SRS=EPSG:4326";     //set WGS84
-          //url += "&BBOX=" + "-180.0,-89.99892578125,180.0,83.1161132812501";      // set bounding box
-          ////url += "&BBOX=" + bbox;      // set bounding box
-          //url += "&WIDTH=256";         //tile size in google
-          //url += "&HEIGHT=256";
-          //
-          //console.log(url);
 
           $scope.map.layers.overlays.wms = {
             name: $scope.activelayer,
@@ -167,7 +166,6 @@ angular.module('starter.controllers', [])
           $scope.map.markers.now = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
-            message: "<a href='#/app/map/1'>ดูรายละเอียด</a>",
             focus: true,
             draggable: true
           };
@@ -188,7 +186,6 @@ angular.module('starter.controllers', [])
       Loading.show('finding your location...');
 
       navigator.geolocation.getCurrentPosition(onSuccess, onError);
-
       function onSuccess(position) {
         $scope.lat = position.coords.latitude;
         $scope.lng = position.coords.longitude;
@@ -219,24 +216,93 @@ angular.module('starter.controllers', [])
     // Triggered in the login modal to close it
     $scope.closeLogin = function () {
       $scope.modal.hide();
+
+      activeland();
     };
+
+    function activeland() {
+      if ($scope.landinfo != null) {
+        angular.forEach($scope.landinfo, function (value, key) {
+          console.log(value);
+          $scope.map.markers.now = {
+            lat: parseFloat(value.parcellat),
+            lng: parseFloat(value.parcellon),
+            message: "<a href='#/app/map/" + value.provid.trim() + "/" + value.amphurid.trim() + "/" + value.parcelno.trim() + "'>ดูรายละเอียด</a>",
+            focus: true,
+            draggable: true
+          };
+
+          $scope.map.center = {
+            lat: parseFloat(value.parcellat),
+            lng: parseFloat(value.parcellon),
+            zoom: 15
+          };
+
+        });
+      }
+    }
 
     // Open the login modal
     $scope.search = function () {
       $scope.modal.show();
     };
 
-    $scope.doSearch = function () {
-      console.log('Doing search', $scope.searchData);
 
-      // Simulate a login delay. Remove this and replace with your login
-      // code if using a login system
-      $timeout(function () {
-        $scope.closeLogin();
-      }, 1000);
+    $scope.provincecode = "0";
+    $scope.aumpurecode = "0";
+    $scope.chanode = "";
+    $scope.provinceidselected = "0";
+    $scope.selectedprovince = function () {
+      Loading.show('กรุณารอสักครู่...');
+      $scope.provinceidselected = $(".province").val();
+
+      ApiService.query('GET', 'http://localhost:82/dolapp/service/GetAmphur/' + $scope.provinceidselected, null, null).then(function (respond) {
+        $scope.aumpurelist = respond.data;
+        Loading.hide();
+      });
+      $scope.selectedaumpure();
+    }
+
+
+    $scope.selectedaumpure = function () {
+      $scope.aumpurecode = $(".aumpure").val();
+    }
+
+    //$(".province").click(function () {
+    //  alert("Handler for .change() called.");
+    //});
+
+    $scope.doSearch = function () {
+      Loading.show('กรุณารอสักครู่...');
+      $scope.chanode = $(".chanode").val();
+      console.log('Doing search', $scope.provinceidselected);
+      console.log('Doing search', $scope.aumpurecode);
+      console.log('Doing search', $scope.chanode);
+
+
+      if ($scope.provinceidselected == "" || $scope.aumpurecode == "" || $scope.chanode == "") {
+        alert('กรุณาระบุข้อมูลให้ครบถ้วน');
+        Loading.hide();
+      }
+      else {
+        ApiService.query('GET', 'http://localhost:82/dolapp/service/GetLandsInformations/' + $scope.provinceidselected + '/' + $scope.aumpurecode.substr(2, 4) + '/' + $scope.chanode, null, null).then(function (respond) {
+          Loading.hide();
+          if (respond.data != null) {
+            $scope.landinfo = respond.data;
+            $scope.closeLogin();
+          }
+          else {
+            alert('ไม่พบข้อมูล');
+          }
+
+        });
+
+      }
+
     };
   })
   .controller('MaplistCtrl', function ($scope, $stateParams, ApiService, $rootScope, $ionicHistory, $http) {
+
 
     $scope.selectlayer = function (title) {
       if (title == "") {
@@ -281,7 +347,54 @@ angular.module('starter.controllers', [])
   .controller('HowtoCtrl', function ($scope, $stateParams) {
   })
 
-  .controller('MapDetailCtrl', function ($scope, $stateParams) {
+  .controller('MapDetailCtrl', function ($scope, $stateParams, ApiService, Loading, LocationsService, $cordovaGeolocation) {
+    Loading.show("กรุณารอสักครู่...");
+    console.log($stateParams);
+    ApiService.query('GET', 'http://localhost:82/dolapp/service/GetLandsInformations/' + $stateParams.provid + '/' + $stateParams.amphurid + '/' + $stateParams.parcelno, null, null).then(function (respond) {
+      Loading.hide();
+      if (respond.data != null) {
+        $scope.landval = respond.data[0];
+        $scope.ggland = "http://maps.google.com/?q=" + parseFloat($scope.landval.parcellat) + "," + parseFloat($scope.landval.parcellon);
+        console.log($scope.landval);
+
+        $scope.launchggmap = function () {
+          var location = parseFloat($scope.landval.parcellat) + ',' + parseFloat($scope.landval.parcellon);
+          window.open('comgooglemaps://?q=' + location, '_system');
+        }
+
+        $scope.gotolandoffice = function () {
+          var to = parseFloat($scope.landval.landofficelat) + ',' + parseFloat($scope.landval.landofficelon);
+          var from = parseFloat($scope.landval.parcellat) + ',' + parseFloat($scope.landval.parcellon);
+          window.open('comgooglemaps://?center=' + from + '/' + to, '_system', 'location=yes');
+        }
+        $scope.gotoland = function () {
+          Loading.show("กรุณารอสักครู่...");
+          $cordovaGeolocation
+            .getCurrentPosition()
+            .then(function (position) {
+              var from = position.coords.latitude + ',' + position.coords.longitude;
+
+              Loading.hide();
+              var to = parseFloat($scope.landval.parcellat) + ',' + parseFloat($scope.landval.parcellon);
+              window.open('comgooglemaps://?center=' + from + '/' + to, '_system', 'location=yes');
+            }, function (err) {
+              // error
+              console.log("Location error!");
+              console.log(err);
+            });
+
+
+
+        }
+
+      }
+      else {
+        alert('ไม่พบข้อมูล');
+      }
+
+    });
+
+
   })
   .controller('MapLayerDetailCtrl', function ($scope, $stateParams, Loading, $cordovaGeolocation, $ionicActionSheet, $timeout) {
     console.log($stateParams);
