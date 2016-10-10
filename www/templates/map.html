@@ -32,7 +32,7 @@
   <ion-content data-tap-disabled="true" style="margin-top: 80px;">
     <div class="curentloc" ng-click="locate();"><i
       class="ion-navigate" style="z-index: 10000;"></i></div>
-    <leaflet defaults="map.defaults" layers="map.layers" center="map.center" markers="map.markers" ng-if="map">
+    <leaflet defaults="map.defaults" layers="map.layers" center="map.center" markers="map.markers" ng-if="map" ng-init="doMapInit()">
     </leaflet>
   </ion-content>
 </ion-view>

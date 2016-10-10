@@ -1,6 +1,6 @@
 angular.module('starter.controllers', [])
 
-  .controller('AppCtrl', function ($scope, $ionicModal, $timeout,$ionicHistory,$state,$ionicSideMenuDelegate,localStorageService) {
+  .controller('AppCtrl', function ($scope, $ionicModal, $timeout,$ionicHistory,$state,$ionicSideMenuDelegate,$window) {
 
     // With the new view caching in Ionic, Controllers are only called
     // when they are recreated or on app start, instead of every page change.
@@ -40,7 +40,7 @@ angular.module('starter.controllers', [])
     $scope.doLogout = function () {
       // Simulate a login delay. Remove this and replace with your login
       // code if using a login system
-      localStorageService.remove('user');
+      $window.localStorage.removeItem('user');
       $timeout(function () {
         $ionicHistory.nextViewOptions({
           disableBack: true
@@ -65,13 +65,13 @@ angular.module('starter.controllers', [])
       {title: 'Cowbell', id: 6}
     ];
   })
-  .controller('landingCtrl', function ($scope,localStorageService,Loading,$timeout,$ionicHistory,$state) {
+  .controller('landingCtrl', function ($scope,$window,Loading,$timeout,$ionicHistory,$state) {
     $ionicHistory.nextViewOptions({
       disableBack: true
     });
     $('.left-buttons').hide();
     $('.right-buttons').hide();
-    var user = localStorageService.get('user');
+    var user = $window.localStorage.getItem('user');
     Loading.show('กรุณารอสักครู่');
     if(user){
       loginsuccess();
@@ -97,7 +97,7 @@ angular.module('starter.controllers', [])
     }
 
   })
-  .controller('loginCtrl', function ($scope, $stateParams, LocationsService, $cordovaGeolocation, $ionicLoading, $ionicModal, $timeout, Loading, ApiService,$ionicSideMenuDelegate,$state,$ionicHistory,localStorageService) {
+  .controller('loginCtrl', function ($scope, $stateParams, LocationsService, $cordovaGeolocation, $ionicLoading, $ionicModal, $timeout, Loading, ApiService,$ionicSideMenuDelegate,$state,$ionicHistory,$window) {
     $('.left-buttons').hide();
     $('.right-buttons').hide();
     $ionicSideMenuDelegate.canDragContent(false);
@@ -125,15 +125,14 @@ angular.module('starter.controllers', [])
         username: $scope.loginData.username,
         password: $scope.loginData.password
       });
-      ApiService.query('POST', 'http://localhost:82/dolapp/service/login',null,$scope.prms).then(function (respond) {
+      ApiService.query('POST', 'http://192.168.1.35:82/dolapp/service/login',null,$scope.prms).then(function (respond) {
         console.log(respond.data);
       if(respond.data.result != null){
-
-          localStorageService.set('user', respond.data.result);
+        $window.localStorage.setItem('user', respond.data.result);
         loginsuccess();
         }
         else{
-           alert('กรุณาตรวจสอบใหม่อีกครั้ง');
+           alert('ไม่สามารถเข้าสู่ระบบได้ กรุณาตรวจสอบใหม่อีกครั้ง');
         Loading.hide();
       }
 
@@ -155,6 +154,21 @@ angular.module('starter.controllers', [])
   })
   .controller('MapCtrl', function ($scope, $stateParams, LocationsService, $cordovaGeolocation, $ionicLoading, $ionicModal, $timeout, Loading, ApiService,$ionicSideMenuDelegate) {
     $ionicSideMenuDelegate.canDragContent(true);
+
+    $scope.doMapInit = function() {
+
+      angular.extend($scope, {
+        tiles: {
+          url: 'http://{s}.tile.opencyclemap.org/cycle/{z}/{x}/{y}.png'
+        },
+        defaults: {
+          scrollWheelZoom: false
+        }
+      });
+
+
+    };
+
 
     $scope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState, fromParams) {
       $scope.map = {
@@ -218,7 +232,7 @@ angular.module('starter.controllers', [])
             name: $scope.activelayer,
             type: 'wms',
             visible: true,
-            url: 'http://localhost/geoserver/dol/wms',
+            url: 'http://192.168.1.35/geoserver/dol/wms',
             layerParams: {
               layers: $scope.activelayer,
               format: 'image/png',
@@ -233,7 +247,7 @@ angular.module('starter.controllers', [])
     }),
 
 
-      //locate();
+      locate();
 
     /**
      * Center map on user's current position
@@ -353,7 +367,7 @@ angular.module('starter.controllers', [])
       Loading.show('กรุณารอสักครู่...');
       $scope.provinceidselected = $(".province").val();
 
-      ApiService.query('GET', 'http://localhost:82/dolapp/service/GetAmphur/' + $scope.provinceidselected, null, null).then(function (respond) {
+      ApiService.query('GET', 'http://192.168.1.35:82/dolapp/service/GetAmphur/' + $scope.provinceidselected, null, null).then(function (respond) {
         $scope.aumpurelist = respond.data;
         Loading.hide();
       });
@@ -382,7 +396,7 @@ angular.module('starter.controllers', [])
         Loading.hide();
       }
       else {
-        ApiService.query('GET', 'http://localhost:82/dolapp/service/GetLandsInformations/' + $scope.provinceidselected + '/' + $scope.aumpurecode.substr(2, 4) + '/' + $scope.chanode, null, null).then(function (respond) {
+        ApiService.query('GET', 'http://192.168.1.35:82/dolapp/service/GetLandsInformations/' + $scope.provinceidselected + '/' + $scope.aumpurecode.substr(2, 4) + '/' + $scope.chanode, null, null).then(function (respond) {
           Loading.hide();
           if (respond.data != null) {
             $scope.landinfo = respond.data;
@@ -409,7 +423,7 @@ angular.module('starter.controllers', [])
       $rootScope.$broadcast('layerchanged', {title: title});
     };
 
-    var layerUrl = "http://localhost/api/layers/";
+    var layerUrl = "http://192.168.1.35/api/layers/";
     $http({
       method: 'jsonp',
       url: layerUrl,
@@ -447,7 +461,7 @@ angular.module('starter.controllers', [])
   .controller('MapDetailCtrl', function ($scope, $stateParams, ApiService, Loading, LocationsService, $cordovaGeolocation) {
     Loading.show("กรุณารอสักครู่...");
     console.log($stateParams);
-    ApiService.query('GET', 'http://localhost:82/dolapp/service/GetLandsInformations/' + $stateParams.provid + '/' + $stateParams.amphurid + '/' + $stateParams.parcelno, null, null).then(function (respond) {
+    ApiService.query('GET', 'http://192.168.1.35:82/dolapp/service/GetLandsInformations/' + $stateParams.provid + '/' + $stateParams.amphurid + '/' + $stateParams.parcelno, null, null).then(function (respond) {
       Loading.hide();
       if (respond.data != null) {
         $scope.landval = respond.data[0];
@@ -461,24 +475,11 @@ angular.module('starter.controllers', [])
 
         $scope.gotolandoffice = function () {
           var to = parseFloat($scope.landval.landofficelat) + ',' + parseFloat($scope.landval.landofficelon);
-          var from = parseFloat($scope.landval.parcellat) + ',' + parseFloat($scope.landval.parcellon);
-          window.open('comgooglemaps://?center=' + from + '/' + to, '_system', 'location=yes');
+          window.open('comgooglemaps://?q=' + to, '_system');
         }
         $scope.gotoland = function () {
-          Loading.show("กรุณารอสักครู่...");
-          $cordovaGeolocation
-            .getCurrentPosition()
-            .then(function (position) {
-              var from = position.coords.latitude + ',' + position.coords.longitude;
-
-              Loading.hide();
-              var to = parseFloat($scope.landval.parcellat) + ',' + parseFloat($scope.landval.parcellon);
-              window.open('comgooglemaps://?center=' + from + '/' + to, '_system', 'location=yes');
-            }, function (err) {
-              // error
-              console.log("Location error!");
-              console.log(err);
-            });
+          var to = parseFloat($scope.landval.parcellat) + ',' + parseFloat($scope.landval.parcellon);
+          window.open('comgooglemaps://?q=' + to, '_system');
 
 
 

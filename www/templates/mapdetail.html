@@ -1,7 +1,8 @@
 <ion-view view-title="รายละเอียด">
 
-  <ion-content data-tap-disabled="true">
-    <ul class="list">
+  <ion-content data-tap-disabled="true" >
+    <ion-scroll direction="y" style="height: 400px;">
+    <ul class="list" >
       <li class="item">
         <strong>หมายเลขระวาง : </strong>{{landval.utm1}} || {{landval.utm3}}
       </li>
@@ -35,6 +36,7 @@
       </li>
 
     </ul>
+      </ion-scroll>
   </ion-content>
   <div class="panel-bottom">
     <button class="btn-block" style="float: left;background: #FF8030;" ng-click="gotolandoffice()">นำทางไปที่สำนักงาน</button>

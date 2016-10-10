@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <widget id="com.ionicframework.starter" version="0.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
-  <name>HelloCordova</name>
+  <name>DOL info</name>
   <description>
         An Ionic Framework and Cordova project.
     </description>
@@ -8,9 +8,11 @@
       Your Name Here
     </author>
   <content src="index.html"/>
-  <access origin="*"/>
-  <access origin="comgooglemaps://*" launch-external="yes"/>
+  <allow-navigation href="*"/>
   <allow-intent href="*"/>
+  <access origin="*"/>
+  <access launch-external="yes" origin="*"/>
+  <access origin="comgooglemaps://*" launch-external="yes"/>
   <allow-navigation href="*"/>
   <preference name="webviewbounce" value="false"/>
   <preference name="UIWebViewBounce" value="false"/>
