@@ -1,6 +1,6 @@
 angular.module('starter.controllers', [])
 
-  .controller('AppCtrl', function ($scope, $ionicModal, $timeout) {
+  .controller('AppCtrl', function ($scope, $ionicModal, $timeout,$ionicHistory,$state,$ionicSideMenuDelegate,localStorageService) {
 
     // With the new view caching in Ionic, Controllers are only called
     // when they are recreated or on app start, instead of every page change.
@@ -12,37 +12,47 @@ angular.module('starter.controllers', [])
     // Form data for the login modal
     $scope.loginData = {};
     $scope.landinfo = null;
-    // Create the login modal that we will use later
-    $ionicModal.fromTemplateUrl('templates/login.html', {
-      scope: $scope
-    }).then(function (modal) {
-      $scope.modal = modal;
-    });
-
-    // Triggered in the login modal to close it
-    $scope.closeLogin = function () {
-      $scope.modal.hide();
-    };
-
-    // Open the login modal
-    $scope.login = function () {
-      $scope.modal.show();
-    };
+    //// Create the login modal that we will use later
+    //$ionicModal.fromTemplateUrl('templates/login.html', {
+    //  scope: $scope
+    //}).then(function (modal) {
+    //  $scope.modal = modal;
+    //});
+    //
+    //// Triggered in the login modal to close it
+    //$scope.closeLogin = function () {
+    //  console.log('xx');
+    //  $scope.modal.hide();
+    //};
+    //
+    //// Open the login modal
+    //$scope.login = function () {
+    //  $scope.modal.show();
+    //};
+    //
+    //
     $scope.activelayer = "ไม่มี";
     $scope.$on('layerchanged', function (event, args) {
       $scope.activelayer = args.title;
     });
-
-    // Perform the login action when the user submits the login form
-    $scope.doLogin = function () {
-      console.log('Doing login', $scope.loginData);
-
+    //
+    //// Perform the login action when the user submits the login form
+    $scope.doLogout = function () {
       // Simulate a login delay. Remove this and replace with your login
       // code if using a login system
+      localStorageService.remove('user');
       $timeout(function () {
-        $scope.closeLogin();
+        $ionicHistory.nextViewOptions({
+          disableBack: true
+        });
+        $('.left-buttons').hide();
+        $('.right-buttons').hide();
+        $ionicSideMenuDelegate.canDragContent(false);
+        $state.go('app.login');
       }, 1000);
     };
+
+
   })
 
   .controller('PlaylistsCtrl', function ($scope) {
@@ -55,9 +65,96 @@ angular.module('starter.controllers', [])
       {title: 'Cowbell', id: 6}
     ];
   })
+  .controller('landingCtrl', function ($scope,localStorageService,Loading,$timeout,$ionicHistory,$state) {
+    $ionicHistory.nextViewOptions({
+      disableBack: true
+    });
+    $('.left-buttons').hide();
+    $('.right-buttons').hide();
+    var user = localStorageService.get('user');
+    Loading.show('กรุณารอสักครู่');
+    if(user){
+      loginsuccess();
+    }
+    else{
+      $timeout(function () {
+        Loading.hide();
+        $state.go('app.login');
 
-  .controller('MapCtrl', function ($scope, $stateParams, LocationsService, $cordovaGeolocation, $ionicLoading, $ionicModal, $timeout, Loading, ApiService) {
+      }, 3*1000);
 
+    }
+    function loginsuccess(){
+      $timeout(function () {
+        $ionicHistory.nextViewOptions({
+          disableBack: true
+        });
+        $('.left-buttons').show();
+        $('.right-buttons').show();
+        Loading.hide();
+        $state.go('app.map');
+      }, 1000);
+    }
+
+  })
+  .controller('loginCtrl', function ($scope, $stateParams, LocationsService, $cordovaGeolocation, $ionicLoading, $ionicModal, $timeout, Loading, ApiService,$ionicSideMenuDelegate,$state,$ionicHistory,localStorageService) {
+    $('.left-buttons').hide();
+    $('.right-buttons').hide();
+    $ionicSideMenuDelegate.canDragContent(false);
+    // Form data for the login modal
+    $scope.loginData = {};
+
+    Object.toparams = function ObjecttoParams(obj) {
+      var p = [];
+      for (var key in obj) {
+        p.push(key + '=' + encodeURIComponent(obj[key]));
+      }
+      return p.join('&');
+    };
+
+    $scope.activelayer = "ไม่มี";
+    $scope.$on('layerchanged', function (event, args) {
+      $scope.activelayer = args.title;
+    });
+
+    // Perform the login action when the user submits the login form
+    $scope.doLogin = function () {
+      Loading.show('กรุณารอสักครู่');
+
+      $scope.prms = $.param({
+        username: $scope.loginData.username,
+        password: $scope.loginData.password
+      });
+      ApiService.query('POST', 'http://localhost:82/dolapp/service/login',null,$scope.prms).then(function (respond) {
+        console.log(respond.data);
+      if(respond.data.result != null){
+
+          localStorageService.set('user', respond.data.result);
+        loginsuccess();
+        }
+        else{
+           alert('กรุณาตรวจสอบใหม่อีกครั้ง');
+        Loading.hide();
+      }
+
+      });
+    };
+
+
+    function loginsuccess(){
+      $timeout(function () {
+        $ionicHistory.nextViewOptions({
+          disableBack: true
+        });
+        $('.left-buttons').show();
+        $('.right-buttons').show();
+        Loading.hide();
+        $state.go('app.map');
+      }, 1000);
+    }
+  })
+  .controller('MapCtrl', function ($scope, $stateParams, LocationsService, $cordovaGeolocation, $ionicLoading, $ionicModal, $timeout, Loading, ApiService,$ionicSideMenuDelegate) {
+    $ionicSideMenuDelegate.canDragContent(true);
 
     $scope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState, fromParams) {
       $scope.map = {
